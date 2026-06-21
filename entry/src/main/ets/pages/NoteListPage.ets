@@ -1,7 +1,6 @@
 import { Note } from '../model/Note';
 import { NoteCategory } from '../model/NoteCategory';
 import { NoteListViewModel } from '../viewmodel/NoteListViewModel';
-import { setDraftCategory } from '../viewmodel/NoteEditorViewModel';
 import { NoteCard } from '../components/NoteCard';
 import { CategoryChipGroup } from '../components/CategoryChipGroup';
 import { CreateCategoryDialog } from '../components/CreateCategoryDialog';
@@ -132,7 +131,7 @@ struct NoteListPage {
       })
       .margin({ right: 20, bottom: 20 })
       .onClick(() => {
-        setDraftCategory(this.viewModel.selectedCategory?.name || '');
+        AppStorage.setOrCreate('draftCat', this.viewModel.selectedCategory?.name || '');
         router.pushUrl({ url: ROUTE_NOTE_EDITOR });
       })
     }

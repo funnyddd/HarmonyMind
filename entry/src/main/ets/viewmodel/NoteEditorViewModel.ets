@@ -3,20 +3,6 @@ import { NoteCategory } from '../model/NoteCategory';
 import { Result } from '../common/Result';
 import { ServiceFactory } from '../domain/factory/ServiceFactory';
 
-// ====== 跨页面传递：纯函数，不用类/静态/框架 ======
-let _draft: string = '';
-
-export function setDraftCategory(name: string): void {
-  _draft = name;
-}
-
-export function takeDraftCategory(): string {
-  const n = _draft;
-  _draft = '';
-  return n;
-}
-// ==================================================
-
 @Observed
 export class NoteEditorViewModel {
   note: Note;
@@ -34,11 +20,7 @@ export class NoteEditorViewModel {
       this.originalNote = note.clone();
       this.isNew = false;
     } else {
-      const draftCat = takeDraftCategory();
       this.note = new Note();
-      if (draftCat.length > 0) {
-        this.note.category = new NoteCategory(draftCat);
-      }
       this.originalNote = this.note.clone();
       this.isNew = true;
     }

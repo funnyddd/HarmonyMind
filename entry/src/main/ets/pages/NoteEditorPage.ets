@@ -14,10 +14,13 @@ struct NoteEditorPage {
   @State viewModel: NoteEditorViewModel = new NoteEditorViewModel();
   @State catName: string = '其他';
   @State catList: NoteCategory[] = [];
+  // 不用 $$ 绑定 viewModel.note，改用本地 @State
+  @State title: string = '';
+  @State content: string = '';
   private noteId: string = '';
 
   async aboutToAppear(): Promise<void> {
-    // 加载分类列表到页面 @State
+    // 加载分类列表
     try {
       const repo = ServiceFactory.getInstance().getNoteRepository();
       const r = await repo.getAllCategories();
@@ -26,15 +29,22 @@ struct NoteEditorPage {
       }
     } catch (e) {}
 
-    // 同步初始分类名（新建时 ViewModel 已通过 NoteDraft 预设）
-    this.catName = this.viewModel.getCategoryName();
-
     // 编辑已有笔记
     const params: RouterParams = router.getParams() as RouterParams;
     if (params && params.noteId) {
       this.noteId = params.noteId;
       await this.viewModel.loadNote(this.noteId);
+      this.title = this.viewModel.note.title;
+      this.content = this.viewModel.note.content;
       this.catName = this.viewModel.getCategoryName();
+    } else {
+      // 新建笔记：从 AppStorage 读取预设分类
+      const draft: string = AppStorage.get<string>('draftCat') as string;
+      if (draft && draft.length > 0) {
+        this.catName = draft;
+        this.viewModel.setCategory(draft);
+        AppStorage.delete('draftCat');
+      }
     }
   }
 
@@ -46,7 +56,7 @@ struct NoteEditorPage {
 
       Scroll() {
         Column() {
-          TextInput({ placeholder: '笔记标题', text: $$this.viewModel.note.title })
+          TextInput({ placeholder: '笔记标题', text: $$this.title })
             .fontSize(22)
             .fontWeight(FontWeight.Bold)
             .fontColor($r('app.color.text_primary'))
@@ -54,6 +64,7 @@ struct NoteEditorPage {
             .borderRadius(0)
             .padding({ left: 16, right: 16, top: 12, bottom: 8 })
             .onChange((value: string) => {
+              this.title = value;
               this.viewModel.updateTitle(value);
             })
 
@@ -63,7 +74,7 @@ struct NoteEditorPage {
             .fontColor($r('app.color.primary'))
             .padding({ left: 16, right: 16, bottom: 4 })
 
-          // 分类切换行（水平滚动，平铺所有分类标签，直接点）
+          // 分类切换行
           Scroll() {
             Row() {
               ForEach(this.catList, (cat: NoteCategory, idx: number) => {
@@ -93,13 +104,14 @@ struct NoteEditorPage {
             .color($r('app.color.divider'))
             .margin({ left: 16, right: 16 })
 
-          TextArea({ placeholder: '开始记录…', text: $$this.viewModel.note.content })
+          TextArea({ placeholder: '开始记录…', text: $$this.content })
             .fontSize(16)
             .fontColor($r('app.color.text_primary'))
             .backgroundColor(Color.Transparent)
             .constraintSize({ minHeight: 200 })
             .padding(16)
             .onChange((value: string) => {
+              this.content = value;
               this.viewModel.updateContent(value);
             })
         }
@@ -126,6 +138,9 @@ struct NoteEditorPage {
       .backgroundColor($r('app.color.card_background'))
       .onClick(async () => {
         if (this.viewModel.isDirty) {
+          // 同步数据到 ViewModel 再保存
+          this.viewModel.note.title = this.title;
+          this.viewModel.note.content = this.content;
           await this.viewModel.save(this.catName);
         }
         router.back();
@@ -144,7 +159,6 @@ struct NoteEditorPage {
 
       Blank()
 
-      // 删除（仅编辑已有笔记）
       if (!this.viewModel.isNew) {
         Button() {
           SymbolGlyph($r('sys.symbol.trash'))
@@ -172,6 +186,8 @@ struct NoteEditorPage {
         .padding({ left: 12, right: 12, top: 6, bottom: 6 })
         .enabled(this.viewModel.isDirty)
         .onClick(async () => {
+          this.viewModel.note.title = this.title;
+          this.viewModel.note.content = this.content;
           const ok = await this.viewModel.save(this.catName);
           promptAction.showToast({ message: ok ? '已保存' : (this.viewModel.errorMessage || '保存失败'), duration: 1500 });
         })
