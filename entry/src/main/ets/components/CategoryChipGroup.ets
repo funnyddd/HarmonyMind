@@ -8,7 +8,7 @@ import { NoteCategory } from '../model/NoteCategory';
 @Component
 export struct CategoryChipGroup {
   @ObjectLink categories: NoteCategory[];
-  @Prop selectedCategoryName: string = '';
+  @Link selectedCategoryName: string;
   onSelect?: (category: NoteCategory | null) => void;
 
   build() {

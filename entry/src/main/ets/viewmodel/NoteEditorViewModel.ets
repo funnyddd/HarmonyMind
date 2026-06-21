@@ -11,17 +11,25 @@ export class NoteEditorViewModel {
   isDirty: boolean = false;
   isSaving: boolean = false;
   errorMessage: string = '';
+  /** 初始分类名，保存时确保不丢失 */
+  private pendingCategoryName: string = '';
 
   private factory: ServiceFactory = ServiceFactory.getInstance();
 
-  constructor(note?: Note) {
+  constructor(note?: Note, initialCategoryName?: string) {
     if (note) {
       this.note = note.clone();
       this.originalNote = note.clone();
       this.isNew = false;
     } else {
       this.note = new Note();
-      this.originalNote = new Note();
+      // 构造时直接设分类，不依赖事后调用
+      if (initialCategoryName && initialCategoryName.length > 0) {
+        this.pendingCategoryName = initialCategoryName;
+        const cat = new NoteCategory(initialCategoryName);
+        this.note.category = cat;
+      }
+      this.originalNote = this.note.clone();
       this.isNew = true;
     }
   }
@@ -60,16 +68,13 @@ export class NoteEditorViewModel {
     this.checkDirty();
   }
 
-  /**
-   * 新建笔记时预设分类（不触发脏标记）
-   */
-  setInitialCategory(categoryName: string): void {
-    const cat = new NoteCategory(categoryName);
-    this.note.category = cat;
-    this.originalNote.category = cat.clone();
-  }
-
   async save(): Promise<boolean> {
+    // 防御：保存前确认分类名称没有被覆盖
+    if (this.isNew && this.pendingCategoryName.length > 0 &&
+        this.note.category?.name !== this.pendingCategoryName) {
+      this.note.category = new NoteCategory(this.pendingCategoryName);
+    }
+
     if (!this.isDirty) {
       return true;
     }

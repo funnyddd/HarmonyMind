@@ -5,26 +5,31 @@ import promptAction from '@ohos.promptAction';
 
 class RouterParams {
   noteId?: string;
-  categoryName?: string;
 }
 
 @Entry
 @Component
 struct NoteEditorPage {
   @State viewModel: NoteEditorViewModel = new NoteEditorViewModel();
+  @State displayCategoryName: string = '其他';
   private noteId: string = '';
 
   async aboutToAppear(): Promise<void> {
+    // 从 AppStorage 读取新建笔记的预设分类
+    const pendingCategory: string = AppStorage.get<string>('newNoteCategory') as string;
+    if (pendingCategory && pendingCategory.length > 0) {
+      // 用预设分类重建 ViewModel
+      this.viewModel = new NoteEditorViewModel(undefined, pendingCategory);
+      this.displayCategoryName = pendingCategory;
+      AppStorage.delete('newNoteCategory');
+    }
+
+    // 编辑已有笔记
     const params: RouterParams = router.getParams() as RouterParams;
     if (params && params.noteId) {
       this.noteId = params.noteId;
       await this.viewModel.loadNote(this.noteId);
-    }
-    // 从分类筛选页新建笔记时，用 AppStorage 传递分类（比 router params 更可靠）
-    const categoryName: string = AppStorage.get<string>('newNoteCategory') as string;
-    if (categoryName && categoryName.length > 0) {
-      this.viewModel.setInitialCategory(categoryName);
-      AppStorage.delete('newNoteCategory');
+      this.displayCategoryName = this.viewModel.note.category?.name || '其他';
     }
   }
 
@@ -49,7 +54,7 @@ struct NoteEditorPage {
               this.viewModel.updateTitle(value);
             })
 
-          Text('分类: ' + (this.viewModel.note.category?.name || '其他'))
+          Text('分类: ' + this.displayCategoryName)
             .fontSize(13)
             .fontColor($r('app.color.primary'))
             .padding({ left: 16, right: 16, bottom: 8 })

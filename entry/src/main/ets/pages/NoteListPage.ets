@@ -63,7 +63,7 @@ struct NoteListPage {
         Row() {
           CategoryChipGroup({
             categories: this.viewModel.categories,
-            selectedCategoryName: this.chipSelectedName,
+            selectedCategoryName: $chipSelectedName,
             onSelect: (category: NoteCategory | null) => {
               this.chipSelectedName = category?.name || '';
               this.viewModel.filterByCategory(category);
