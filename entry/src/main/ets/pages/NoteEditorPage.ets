@@ -5,6 +5,7 @@ import promptAction from '@ohos.promptAction';
 
 class RouterParams {
   noteId?: string;
+  categoryName?: string;
 }
 
 @Entry
@@ -18,6 +19,9 @@ struct NoteEditorPage {
     if (params && params.noteId) {
       this.noteId = params.noteId;
       await this.viewModel.loadNote(this.noteId);
+    } else if (params && params.categoryName) {
+      // 从分类筛选页新建笔记，预设分类
+      this.viewModel.setInitialCategory(params.categoryName);
     }
   }
 

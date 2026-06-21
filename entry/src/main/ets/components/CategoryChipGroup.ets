@@ -8,14 +8,14 @@ import { NoteCategory } from '../model/NoteCategory';
 @Component
 export struct CategoryChipGroup {
   @ObjectLink categories: NoteCategory[];
-  @Prop selectedCategory: NoteCategory | null = null;
+  @Prop selectedCategoryName: string = '';
   onSelect?: (category: NoteCategory | null) => void;
 
   build() {
     Scroll() {
       Row() {
         // 「全部分类」Chip
-        this.ChipBuilder('全部分类', this.selectedCategory === null, () => {
+        this.ChipBuilder('全部分类', this.selectedCategoryName === '', () => {
           this.onSelect?.(null);
         })
 
@@ -23,7 +23,7 @@ export struct CategoryChipGroup {
         ForEach(this.categories, (category: NoteCategory) => {
           this.ChipBuilder(
             category.name,
-            this.selectedCategory?.name === category.name,
+            this.selectedCategoryName === category.name,
             () => {
               this.onSelect?.(category);
             },

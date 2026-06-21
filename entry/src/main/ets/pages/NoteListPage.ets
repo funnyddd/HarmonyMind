@@ -62,7 +62,7 @@ struct NoteListPage {
         Row() {
           CategoryChipGroup({
             categories: this.viewModel.categories,
-            selectedCategory: this.viewModel.selectedCategory,
+            selectedCategoryName: this.viewModel.selectedCategory?.name || '',
             onSelect: (category: NoteCategory | null) => {
               this.viewModel.filterByCategory(category);
             }
@@ -117,7 +117,11 @@ struct NoteListPage {
       })
       .margin({ right: 20, bottom: 20 })
       .onClick(() => {
-        router.pushUrl({ url: ROUTE_NOTE_EDITOR });
+        const p: Record<string, string> = {};
+        if (this.viewModel.selectedCategory) {
+          p['categoryName'] = this.viewModel.selectedCategory.name;
+        }
+        router.pushUrl({ url: ROUTE_NOTE_EDITOR, params: p });
       })
     }
     .width('100%')

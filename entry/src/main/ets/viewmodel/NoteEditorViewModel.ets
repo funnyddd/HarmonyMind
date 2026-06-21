@@ -60,6 +60,15 @@ export class NoteEditorViewModel {
     this.checkDirty();
   }
 
+  /**
+   * 新建笔记时预设分类（不触发脏标记）
+   */
+  setInitialCategory(categoryName: string): void {
+    const cat = new NoteCategory(categoryName);
+    this.note.category = cat;
+    this.originalNote.category = cat.clone();
+  }
+
   async save(): Promise<boolean> {
     if (!this.isDirty) {
       return true;
