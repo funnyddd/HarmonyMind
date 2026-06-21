@@ -12,15 +12,14 @@ class RouterParams {
 @Component
 struct NoteEditorPage {
   @State viewModel: NoteEditorViewModel = new NoteEditorViewModel();
-  @State catName: string = '其他';
+  @State catName: string = '';
   @State catList: NoteCategory[] = [];
-  // 不用 $$ 绑定 viewModel.note，改用本地 @State
   @State title: string = '';
   @State content: string = '';
   private noteId: string = '';
 
   async aboutToAppear(): Promise<void> {
-    // 加载分类列表
+    // 加载分类
     try {
       const repo = ServiceFactory.getInstance().getNoteRepository();
       const r = await repo.getAllCategories();
@@ -29,36 +28,26 @@ struct NoteEditorPage {
       }
     } catch (e) {}
 
-    // 编辑已有笔记
     const params: RouterParams = router.getParams() as RouterParams;
     if (params && params.noteId) {
+      // 编辑已有笔记
       this.noteId = params.noteId;
       await this.viewModel.loadNote(this.noteId);
       this.title = this.viewModel.note.title;
       this.content = this.viewModel.note.content;
       this.catName = this.viewModel.getCategoryName();
     } else {
-      // 新建笔记：多途径尝试获取预设分类
-      let draft: string = '';
-      // 1) router.params
-      if (params) {
-        const p = params as Record<string, Object>;
-        if (p['__cat']) { draft = p['__cat'] as string; }
+      // 新建笔记：取第一个分类作为默认（排除"其他"）
+      this.catName = '其他';
+      if (this.catList.length > 0) {
+        for (let i = 0; i < this.catList.length; i++) {
+          if (this.catList[i].name !== '其他') {
+            this.catName = this.catList[i].name;
+            break;
+          }
+        }
       }
-      // 2) AppStorage
-      if (!draft) {
-        const s: string = AppStorage.get<string>('draftCat') as string;
-        if (s && s.length > 0) { draft = s; AppStorage.delete('draftCat'); }
-      }
-      // 3) 兜底：用分类列表第一个非"其他"
-      if (!draft && this.catList.length > 0) {
-        const first = this.catList.find((c: NoteCategory) => c.name !== '其他');
-        if (first) { draft = first.name; }
-      }
-      if (draft && draft.length > 0) {
-        this.catName = draft;
-        this.viewModel.setCategory(draft);
-      }
+      this.viewModel.setCategory(this.catName);
     }
   }
 
@@ -68,7 +57,6 @@ struct NoteEditorPage {
 
       Divider().strokeWidth(0.5).color($r('app.color.divider'))
 
-      // 标题（固定在 Scroll 外）
       TextInput({ placeholder: '笔记标题', text: $$this.title })
         .fontSize(22)
         .fontWeight(FontWeight.Bold)
@@ -81,22 +69,23 @@ struct NoteEditorPage {
           this.viewModel.updateTitle(value);
         })
 
-      // 分类标签 + 切换行（固定在 Scroll 外，避免嵌套 Scroll 事件冲突）
       Text('分类: ' + this.catName)
         .fontSize(13)
         .fontColor($r('app.color.primary'))
         .padding({ left: 16, right: 16, bottom: 4 })
 
+      // 分类行：用 Button 不用 Text，保证点击事件
       Scroll() {
         Row() {
           ForEach(this.catList, (cat: NoteCategory, idx: number) => {
-            Text(cat.name)
+            Button(cat.name)
               .fontSize(12)
               .fontWeight(this.catName === cat.name ? FontWeight.Medium : FontWeight.Normal)
               .fontColor(this.catName === cat.name ? '#FFFFFF' : $r('app.color.text_primary'))
-              .padding({ left: 10, right: 10, top: 4, bottom: 4 })
-              .borderRadius(12)
               .backgroundColor(this.catName === cat.name ? '#007DFF' : $r('app.color.background'))
+              .borderRadius(12)
+              .height(28)
+              .padding({ left: 10, right: 10 })
               .margin({ right: 6 })
               .onClick(() => {
                 this.catName = cat.name;
@@ -108,7 +97,7 @@ struct NoteEditorPage {
       }
       .scrollable(ScrollDirection.Horizontal)
       .scrollBar(BarState.Off)
-      .height(32)
+      .height(36)
       .margin({ bottom: 8 })
 
       Divider()
@@ -116,7 +105,6 @@ struct NoteEditorPage {
         .color($r('app.color.divider'))
         .margin({ left: 16, right: 16 })
 
-      // 正文（可滚动区域）
       Scroll() {
         TextArea({ placeholder: '开始记录…', text: $$this.content })
           .fontSize(16)
@@ -151,7 +139,6 @@ struct NoteEditorPage {
       .backgroundColor($r('app.color.card_background'))
       .onClick(async () => {
         if (this.viewModel.isDirty) {
-          // 同步数据到 ViewModel 再保存
           this.viewModel.note.title = this.title;
           this.viewModel.note.content = this.content;
           await this.viewModel.save(this.catName);
