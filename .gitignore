@@ -1,0 +1,34 @@
+# ========== HarmonyOS Build ==========
+build/
+entry/build/
+**/build/
+
+# ========== Build Cache ==========
+.hvigor/
+
+# ========== IDE & Editor ==========
+.idea/
+*.iml
+
+# ========== Claude Code ==========
+.claude/
+
+# ========== Dependencies ==========
+oh_modules/
+node_modules/
+
+# ========== OS Files ==========
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ========== Logs ==========
+*.log
+
+# ========== Sensitive ==========
+*.p12
+*.jks
+*.keystore
+*.csr
+*.cer
+local.properties

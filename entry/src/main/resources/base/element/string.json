@@ -1,0 +1,132 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "HarmonyMind - 跨设备 AI 智能笔记模块"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "HarmonyMind 主入口 - 笔记列表管理"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "HarmonyMind"
+    },
+    {
+      "name": "NoteEditorAbility_desc",
+      "value": "笔记编辑 - 支持跨设备 Continuation"
+    },
+    {
+      "name": "NoteEditorAbility_label",
+      "value": "编辑笔记"
+    },
+    {
+      "name": "QuickNoteFormAbility_desc",
+      "value": "桌面卡片快速记笔记"
+    },
+    {
+      "name": "QuickNoteFormAbility_label",
+      "value": "快速笔记"
+    },
+    {
+      "name": "widget_quick_note",
+      "value": "快速笔记"
+    },
+    {
+      "name": "widget_quick_note_desc",
+      "value": "在桌面一键录音或记录笔记"
+    },
+    {
+      "name": "distributed_permission_reason",
+      "value": "用于跨设备同步笔记数据，实现各设备间无缝协作"
+    },
+    {
+      "name": "microphone_permission_reason",
+      "value": "用于语音输入记录笔记"
+    },
+    {
+      "name": "internet_permission_reason",
+      "value": "用于云端 AI 服务和数据同步"
+    },
+    {
+      "name": "note_list_title",
+      "value": "我的笔记"
+    },
+    {
+      "name": "search_hint",
+      "value": "搜索笔记…"
+    },
+    {
+      "name": "add_note",
+      "value": "新建笔记"
+    },
+    {
+      "name": "edit_note",
+      "value": "编辑笔记"
+    },
+    {
+      "name": "delete_note",
+      "value": "删除笔记"
+    },
+    {
+      "name": "save",
+      "value": "保存"
+    },
+    {
+      "name": "cancel",
+      "value": "取消"
+    },
+    {
+      "name": "confirm_delete",
+      "value": "确认删除"
+    },
+    {
+      "name": "confirm_delete_msg",
+      "value": "确定要删除这条笔记吗？此操作不可恢复。"
+    },
+    {
+      "name": "ai_summary",
+      "value": "AI 摘要"
+    },
+    {
+      "name": "generating_summary",
+      "value": "正在生成摘要…"
+    },
+    {
+      "name": "voice_input",
+      "value": "语音输入"
+    },
+    {
+      "name": "recording",
+      "value": "正在录音…"
+    },
+    {
+      "name": "device_sync",
+      "value": "设备同步"
+    },
+    {
+      "name": "no_notes",
+      "value": "还没有笔记，点击下方按钮创建吧"
+    },
+    {
+      "name": "all_categories",
+      "value": "全部分类"
+    },
+    {
+      "name": "sync_status_synced",
+      "value": "已同步"
+    },
+    {
+      "name": "sync_status_pending",
+      "value": "同步中…"
+    },
+    {
+      "name": "dark_mode",
+      "value": "深色模式"
+    },
+    {
+      "name": "settings",
+      "value": "设置"
+    }
+  ]
+}

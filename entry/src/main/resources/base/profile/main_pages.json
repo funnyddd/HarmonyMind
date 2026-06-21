@@ -1,0 +1,7 @@
+{
+  "src": [
+    "pages/NoteListPage",
+    "pages/NoteEditorPage",
+    "pages/SearchPage"
+  ]
+}
