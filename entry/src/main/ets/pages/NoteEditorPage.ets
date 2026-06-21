@@ -1,5 +1,5 @@
 import { NoteCategory } from '../model/NoteCategory';
-import { NoteEditorViewModel, NoteDraft } from '../viewmodel/NoteEditorViewModel';
+import { NoteEditorViewModel } from '../viewmodel/NoteEditorViewModel';
 import { ServiceFactory } from '../domain/factory/ServiceFactory';
 import router from '@ohos.router';
 import promptAction from '@ohos.promptAction';
@@ -126,7 +126,7 @@ struct NoteEditorPage {
       .backgroundColor($r('app.color.card_background'))
       .onClick(async () => {
         if (this.viewModel.isDirty) {
-          await this.viewModel.save();
+          await this.viewModel.save(this.catName);
         }
         router.back();
       })
@@ -172,7 +172,7 @@ struct NoteEditorPage {
         .padding({ left: 12, right: 12, top: 6, bottom: 6 })
         .enabled(this.viewModel.isDirty)
         .onClick(async () => {
-          const ok = await this.viewModel.save();
+          const ok = await this.viewModel.save(this.catName);
           promptAction.showToast({ message: ok ? '已保存' : (this.viewModel.errorMessage || '保存失败'), duration: 1500 });
         })
     }

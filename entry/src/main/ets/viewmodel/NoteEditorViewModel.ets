@@ -3,13 +3,19 @@ import { NoteCategory } from '../model/NoteCategory';
 import { Result } from '../common/Result';
 import { ServiceFactory } from '../domain/factory/ServiceFactory';
 
-/**
- * 全局草稿：存放新建笔记的初始分类名
- * 不用 AppStorage / router params，避免框架状态管理问题
- */
-export class NoteDraft {
-  static initialCategory: string = '';
+// ====== 跨页面传递：纯函数，不用类/静态/框架 ======
+let _draft: string = '';
+
+export function setDraftCategory(name: string): void {
+  _draft = name;
 }
+
+export function takeDraftCategory(): string {
+  const n = _draft;
+  _draft = '';
+  return n;
+}
+// ==================================================
 
 @Observed
 export class NoteEditorViewModel {
@@ -19,7 +25,6 @@ export class NoteEditorViewModel {
   isDirty: boolean = false;
   isSaving: boolean = false;
   errorMessage: string = '';
-  categories: NoteCategory[] = [];
 
   private factory: ServiceFactory = ServiceFactory.getInstance();
 
@@ -29,11 +34,10 @@ export class NoteEditorViewModel {
       this.originalNote = note.clone();
       this.isNew = false;
     } else {
+      const draftCat = takeDraftCategory();
       this.note = new Note();
-      // 从全局草稿读取初始分类
-      if (NoteDraft.initialCategory.length > 0) {
-        this.note.category = new NoteCategory(NoteDraft.initialCategory);
-        NoteDraft.initialCategory = '';
+      if (draftCat.length > 0) {
+        this.note.category = new NoteCategory(draftCat);
       }
       this.originalNote = this.note.clone();
       this.isNew = true;
@@ -45,7 +49,6 @@ export class NoteEditorViewModel {
     try {
       const useCase = this.factory.getGetNotesUseCase();
       const result = await useCase.getById(noteId);
-
       if (result.isSuccess && result.data !== null) {
         this.note = result.data;
         this.originalNote = result.data.clone();
@@ -55,18 +58,6 @@ export class NoteEditorViewModel {
       }
     } catch (err) {
       this.errorMessage = '加载笔记失败';
-    }
-  }
-
-  async loadCategories(): Promise<void> {
-    try {
-      const repo = this.factory.getNoteRepository();
-      const result = await repo.getAllCategories();
-      if (result.isSuccess && result.data !== null) {
-        this.categories = result.data;
-      }
-    } catch (err) {
-      // silent
     }
   }
 
@@ -90,7 +81,12 @@ export class NoteEditorViewModel {
     return this.note.category?.name || '其他';
   }
 
-  async save(): Promise<boolean> {
+  /** 保存时显式传入分类名，不依赖 note.category */
+  async save(categoryName: string): Promise<boolean> {
+    // 确保 note.category 与 UI 同步
+    if (this.note.category?.name !== categoryName) {
+      this.note.category = new NoteCategory(categoryName);
+    }
     if (!this.isDirty) {
       return true;
     }
@@ -99,7 +95,6 @@ export class NoteEditorViewModel {
 
     try {
       let result: Result<Note>;
-
       if (this.isNew) {
         const useCase = this.factory.getCreateNoteUseCase();
         result = await useCase.execute(this.note.title, this.note.content, this.note.category);
@@ -107,7 +102,6 @@ export class NoteEditorViewModel {
         const repo = this.factory.getNoteRepository();
         result = await repo.updateNote(this.note);
       }
-
       if (result.isSuccess && result.data !== null) {
         if (this.isNew) {
           this.note = result.data;
