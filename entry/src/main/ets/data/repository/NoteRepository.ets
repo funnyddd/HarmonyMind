@@ -37,13 +37,13 @@ export class NoteRepository {
   async createNote(
     title: string,
     content: string,
-    category?: NoteCategory
+    categoryName: string
   ): Promise<Result<Note>> {
     const note = new Note(
       this.generateId(),
       title,
       content,
-      category || new NoteCategory('其他'),
+      new NoteCategory(categoryName || '其他'),
       new Date().toISOString(),
       new Date().toISOString()
     );

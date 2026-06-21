@@ -14,17 +14,10 @@ export class CreateNoteUseCase {
     this.repository = repository;
   }
 
-  async execute(title: string, content: string, category?: NoteCategory): Promise<Result<Note>> {
-    const trimmedTitle = (title || '').trim();
-    const trimmedContent = (content || '').trim();
-
-    if (!trimmedContent) {
-      const defaultTitle = trimmedTitle || `无标题笔记 ${new Date().toLocaleDateString()}`;
-      return await this.repository.createNote(defaultTitle, '');
-    }
-
-    const finalTitle = trimmedTitle || this.generateDefaultTitle(trimmedContent);
-    return await this.repository.createNote(finalTitle, trimmedContent, category);
+  async execute(title: string, content: string, categoryName: string): Promise<Result<Note>> {
+    const finalTitle = (title || '').trim() || this.generateDefaultTitle(content);
+    const finalContent = (content || '').trim();
+    return await this.repository.createNote(finalTitle, finalContent, categoryName);
   }
 
   private generateDefaultTitle(content: string): string {

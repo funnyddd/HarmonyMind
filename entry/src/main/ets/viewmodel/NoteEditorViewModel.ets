@@ -79,8 +79,10 @@ export class NoteEditorViewModel {
       let result: Result<Note>;
       if (this.isNew) {
         const useCase = this.factory.getCreateNoteUseCase();
-        result = await useCase.execute(this.note.title, this.note.content, this.note.category);
+        result = await useCase.execute(this.note.title, this.note.content, categoryName);
       } else {
+        // 编辑已有笔记，先确保 category 正确再更新
+        this.note.category = new NoteCategory(categoryName);
         const repo = this.factory.getNoteRepository();
         result = await repo.updateNote(this.note);
       }
