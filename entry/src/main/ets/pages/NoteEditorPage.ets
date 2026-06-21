@@ -1,5 +1,6 @@
 import { NoteCategory } from '../model/NoteCategory';
 import { NoteEditorViewModel } from '../viewmodel/NoteEditorViewModel';
+import { SelectCategoryDialog } from '../components/SelectCategoryDialog';
 import { ServiceFactory } from '../domain/factory/ServiceFactory';
 import router from '@ohos.router';
 import promptAction from '@ohos.promptAction';
@@ -13,6 +14,19 @@ struct NoteEditorPage {
   @State title: string = '';
   @State content: string = '';
   private noteId: string = '';
+  private catDialog: CustomDialogController = new CustomDialogController({
+    builder: SelectCategoryDialog({
+      categories: this.catList,
+      currentName: this.catName,
+      onSelect: (name: string) => {
+        this.catName = name;
+        this.viewModel.setCategory(name);
+      }
+    }),
+    autoCancel: true,
+    alignment: DialogAlignment.Center,
+    customStyle: true
+  });
 
   async aboutToAppear(): Promise<void> {
     // 加载分类列表
@@ -45,41 +59,22 @@ struct NoteEditorPage {
     }
   }
 
-  // ==================== 分类选择（系统原生菜单） ====================
-  private pickCategory(): void {
-    if (this.catList.length === 0) { return; }
-
-    const items: Object[] = [];
-    for (let i = 0; i < this.catList.length; i++) {
-      const c: NoteCategory = this.catList[i];
-      items.push({ text: (c.name === this.catName ? '✓ ' : '') + c.name });
-    }
-
-    try {
-      promptAction.showActionMenu({ title: '选择分类', buttons: items })
-        .then((res: Object) => {
-          const idx: number = (res as Record<string, Object>)['index'] as number;
-          if (idx >= 0 && idx < this.catList.length) {
-            this.catName = this.catList[idx].name;
-            this.viewModel.setCategory(this.catList[idx].name);
-          }
-        })
-        .catch(() => { this.fallbackPickCategory(); });
-    } catch (e) {
-      this.fallbackPickCategory();
-    }
-  }
-
-  // showActionMenu 不可用时的兜底：循环切换
-  private fallbackPickCategory(): void {
-    if (this.catList.length === 0) { return; }
-    let idx: number = 0;
-    for (let i = 0; i < this.catList.length; i++) {
-      if (this.catList[i].name === this.catName) { idx = i; break; }
-    }
-    idx = (idx + 1) % this.catList.length;
-    this.catName = this.catList[idx].name;
-    this.viewModel.setCategory(this.catList[idx].name);
+  private openCategoryPicker(): void {
+    // 更新 dialog 数据后打开
+    this.catDialog = new CustomDialogController({
+      builder: SelectCategoryDialog({
+        categories: this.catList,
+        currentName: this.catName,
+        onSelect: (name: string) => {
+          this.catName = name;
+          this.viewModel.setCategory(name);
+        }
+      }),
+      autoCancel: true,
+      alignment: DialogAlignment.Center,
+      customStyle: true
+    });
+    this.catDialog.open();
   }
 
   // ==================== 保存 ====================
@@ -174,7 +169,7 @@ struct NoteEditorPage {
       }
       .width('100%')
       .padding({ left: 16, right: 16, top: 4, bottom: 8 })
-      .onClick(() => { this.pickCategory(); })
+      .onClick(() => { this.openCategoryPicker(); })
 
       Divider().strokeWidth(0.5).color($r('app.color.divider'))
         .margin({ left: 16, right: 16 })
