@@ -219,7 +219,22 @@ export class LocalNoteDataSource {
   async updateNote(note: Note): Promise<Result<boolean>> {
     try {
       const store = this.getStore();
-      const bucket = this.buildNoteBucket(note, false);
+      // 用干净对象，只传 notes 表实际存在的列
+      const bucket: relationalStore.ValuesBucket = {
+        'title': note.title,
+        'content': note.content,
+        'preview': note.preview,
+        'category_name': note.category ? note.category.name : '其他',
+        'category_color': note.category ? note.category.color : '#8E8E93',
+        'category_icon': note.category ? note.category.iconName : 'file',
+        'updated_at': note.updatedAt,
+        'sync_status': note.syncStatus,
+        'version': note.version,
+        'ai_summary': note.aiSummary,
+        'has_ai_summary': note.hasAiSummary ? 1 : 0,
+        'is_favorite': note.isFavorite ? 1 : 0,
+        'source_device': note.sourceDevice
+      };
 
       const predicates = new relationalStore.RdbPredicates(DB_TABLE_NOTES);
       predicates.equalTo('id', note.id);
