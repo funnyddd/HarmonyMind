@@ -11,16 +11,19 @@ class RouterParams {
 @Component
 struct NoteEditorPage {
   @State viewModel: NoteEditorViewModel = new NoteEditorViewModel();
+  @State catName: string = '其他';
   @State showPicker: boolean = false;
   private noteId: string = '';
 
   async aboutToAppear(): Promise<void> {
     await this.viewModel.loadCategories();
+    this.catName = this.catName;
 
     const params: RouterParams = router.getParams() as RouterParams;
     if (params && params.noteId) {
       this.noteId = params.noteId;
       await this.viewModel.loadNote(this.noteId);
+      this.catName = this.catName;
     }
   }
 
@@ -48,7 +51,7 @@ struct NoteEditorPage {
           // ★ 分类选择器
           Column() {
             Row() {
-              Text('分类: ' + this.viewModel.getCategoryName())
+              Text('分类: ' + this.catName)
                 .fontSize(13)
                 .fontColor($r('app.color.primary'))
                 .layoutWeight(1)
@@ -73,11 +76,11 @@ struct NoteEditorPage {
 
                     Text(cat.name)
                       .fontSize(14)
-                      .fontColor(this.viewModel.getCategoryName() === cat.name ?
+                      .fontColor(this.catName === cat.name ?
                         $r('app.color.primary') : $r('app.color.text_primary'))
                       .layoutWeight(1)
 
-                    if (this.viewModel.getCategoryName() === cat.name) {
+                    if (this.catName === cat.name) {
                       SymbolGlyph($r('sys.symbol.checkmark'))
                         .fontSize(14)
                         .fontColor([$r('app.color.primary')])
@@ -86,6 +89,7 @@ struct NoteEditorPage {
                   .width('100%')
                   .padding({ left: 16, right: 16, top: 10, bottom: 10 })
                   .onClick(() => {
+                    this.catName = cat.name;
                     this.viewModel.setCategory(cat.name);
                     this.showPicker = false;
                   })

@@ -1,20 +1,17 @@
 import { NoteCategory } from '../model/NoteCategory';
 
-/**
- * CategoryChipGroup — 分类标签组组件
- * 水平可滚动分类筛选栏，选中状态完全自管理
- */
-@Reusable
+/** 模块级变量：父组件重渲染导致组件重建时保持选中状态 */
+let _sel: string = '';
+
 @Component
 export struct CategoryChipGroup {
   @Prop categories: NoteCategory[] = [];
-  @State selectedName: string = '';
+  @State selectedName: string = _sel;
   onSelect?: (category: NoteCategory | null) => void;
 
   build() {
     Scroll() {
       Row() {
-        // 「全部分类」Chip（内联，不用 @Builder）
         Row() {
           Text('全部分类')
             .fontSize(13)
@@ -26,11 +23,11 @@ export struct CategoryChipGroup {
         .backgroundColor(this.selectedName === '' ? '#007DFF' : $r('app.color.background'))
         .margin({ right: 8 })
         .onClick(() => {
+          _sel = '';
           this.selectedName = '';
           this.onSelect?.(null);
         })
 
-        // 各分类 Chip（内联）
         ForEach(this.categories, (category: NoteCategory) => {
           Row() {
             if (this.selectedName === category.name && category.color) {
@@ -38,7 +35,6 @@ export struct CategoryChipGroup {
                 .fill(category.color)
                 .margin({ right: 4 })
             }
-
             Text(category.name)
               .fontSize(13)
               .fontWeight(this.selectedName === category.name ? FontWeight.Medium : FontWeight.Normal)
@@ -49,6 +45,7 @@ export struct CategoryChipGroup {
           .backgroundColor(this.selectedName === category.name ? '#007DFF' : $r('app.color.background'))
           .margin({ right: 8 })
           .onClick(() => {
+            _sel = category.name;
             this.selectedName = category.name;
             this.onSelect?.(category);
           })
