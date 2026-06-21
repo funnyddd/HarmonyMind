@@ -128,6 +128,21 @@ export class NoteEditorViewModel {
     }
   }
 
+  async deleteNote(): Promise<boolean> {
+    try {
+      const useCase = this.factory.getDeleteNoteUseCase();
+      const result = await useCase.execute(this.note.id);
+      if (result.isSuccess) {
+        return true;
+      }
+      this.errorMessage = result.message;
+      return false;
+    } catch (err) {
+      this.errorMessage = '删除失败';
+      return false;
+    }
+  }
+
   private checkDirty(): void {
     this.isDirty =
       this.note.title !== this.originalNote.title ||

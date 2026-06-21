@@ -1,5 +1,6 @@
 import { NoteCategory } from '../model/NoteCategory';
 import { NoteEditorViewModel, NoteDraft } from '../viewmodel/NoteEditorViewModel';
+import { ServiceFactory } from '../domain/factory/ServiceFactory';
 import router from '@ohos.router';
 import promptAction from '@ohos.promptAction';
 
@@ -12,18 +13,28 @@ class RouterParams {
 struct NoteEditorPage {
   @State viewModel: NoteEditorViewModel = new NoteEditorViewModel();
   @State catName: string = '其他';
-  @State showPicker: boolean = false;
+  @State catList: NoteCategory[] = [];
   private noteId: string = '';
 
   async aboutToAppear(): Promise<void> {
-    await this.viewModel.loadCategories();
-    this.catName = this.catName;
+    // 加载分类列表到页面 @State
+    try {
+      const repo = ServiceFactory.getInstance().getNoteRepository();
+      const r = await repo.getAllCategories();
+      if (r.isSuccess && r.data) {
+        this.catList = r.data;
+      }
+    } catch (e) {}
 
+    // 同步初始分类名（新建时 ViewModel 已通过 NoteDraft 预设）
+    this.catName = this.viewModel.getCategoryName();
+
+    // 编辑已有笔记
     const params: RouterParams = router.getParams() as RouterParams;
     if (params && params.noteId) {
       this.noteId = params.noteId;
       await this.viewModel.loadNote(this.noteId);
-      this.catName = this.catName;
+      this.catName = this.viewModel.getCategoryName();
     }
   }
 
@@ -31,9 +42,7 @@ struct NoteEditorPage {
     Column() {
       this.buildToolbar()
 
-      Divider()
-        .strokeWidth(0.5)
-        .color($r('app.color.divider'))
+      Divider().strokeWidth(0.5).color($r('app.color.divider'))
 
       Scroll() {
         Column() {
@@ -48,59 +57,36 @@ struct NoteEditorPage {
               this.viewModel.updateTitle(value);
             })
 
-          // ★ 分类选择器
-          Column() {
-            Row() {
-              Text('分类: ' + this.catName)
-                .fontSize(13)
-                .fontColor($r('app.color.primary'))
-                .layoutWeight(1)
-
-              SymbolGlyph($r('sys.symbol.chevron_down'))
-                .fontSize(12)
-                .fontColor([$r('app.color.text_secondary')])
-            }
+          // 当前分类
+          Text('分类: ' + this.catName)
+            .fontSize(13)
+            .fontColor($r('app.color.primary'))
             .padding({ left: 16, right: 16, bottom: 4 })
-            .onClick(() => {
-              this.showPicker = !this.showPicker;
-            })
 
-            // 展开的分类列表
-            if (this.showPicker) {
-              Column() {
-                ForEach(this.viewModel.categories, (cat: NoteCategory) => {
-                  Row() {
-                    Circle({ width: 8, height: 8 })
-                      .fill(cat.color)
-                      .margin({ right: 8 })
-
-                    Text(cat.name)
-                      .fontSize(14)
-                      .fontColor(this.catName === cat.name ?
-                        $r('app.color.primary') : $r('app.color.text_primary'))
-                      .layoutWeight(1)
-
-                    if (this.catName === cat.name) {
-                      SymbolGlyph($r('sys.symbol.checkmark'))
-                        .fontSize(14)
-                        .fontColor([$r('app.color.primary')])
-                    }
-                  }
-                  .width('100%')
-                  .padding({ left: 16, right: 16, top: 10, bottom: 10 })
+          // 分类切换行（水平滚动，平铺所有分类标签，直接点）
+          Scroll() {
+            Row() {
+              ForEach(this.catList, (cat: NoteCategory, idx: number) => {
+                Text(cat.name)
+                  .fontSize(12)
+                  .fontWeight(this.catName === cat.name ? FontWeight.Medium : FontWeight.Normal)
+                  .fontColor(this.catName === cat.name ? '#FFFFFF' : $r('app.color.text_primary'))
+                  .padding({ left: 10, right: 10, top: 4, bottom: 4 })
+                  .borderRadius(12)
+                  .backgroundColor(this.catName === cat.name ? '#007DFF' : $r('app.color.background'))
+                  .margin({ right: 6 })
                   .onClick(() => {
                     this.catName = cat.name;
                     this.viewModel.setCategory(cat.name);
-                    this.showPicker = false;
                   })
-                }, (cat: NoteCategory) => cat.id)
-              }
-              .width('100%')
-              .backgroundColor($r('app.color.background'))
-              .borderRadius(8)
-              .margin({ left: 16, right: 16, bottom: 8 })
+              }, (cat: NoteCategory, idx: number) => cat.id)
             }
+            .padding({ left: 16, right: 16 })
           }
+          .scrollable(ScrollDirection.Horizontal)
+          .scrollBar(BarState.Off)
+          .height(32)
+          .margin({ bottom: 8 })
 
           Divider()
             .strokeWidth(0.5)
@@ -153,12 +139,29 @@ struct NoteEditorPage {
         .fontColor($r('app.color.text_primary'))
 
       if (this.viewModel.isDirty) {
-        Circle({ width: 8, height: 8 })
-          .fill('#FF9500')
-          .margin({ left: 6 })
+        Circle({ width: 8, height: 8 }).fill('#FF9500').margin({ left: 6 })
       }
 
       Blank()
+
+      // 删除（仅编辑已有笔记）
+      if (!this.viewModel.isNew) {
+        Button() {
+          SymbolGlyph($r('sys.symbol.trash'))
+            .fontSize(18)
+            .fontColor(['#FF3B30'])
+        }
+        .type(ButtonType.Circle)
+        .width(36)
+        .height(36)
+        .backgroundColor($r('app.color.card_background'))
+        .margin({ right: 4 })
+        .onClick(async () => {
+          const ok = await this.viewModel.deleteNote();
+          promptAction.showToast({ message: ok ? '已删除' : (this.viewModel.errorMessage || '删除失败'), duration: 1500 });
+          if (ok) { router.back(); }
+        })
+      }
 
       Button($r('app.string.save'))
         .fontSize(14)
@@ -169,12 +172,8 @@ struct NoteEditorPage {
         .padding({ left: 12, right: 12, top: 6, bottom: 6 })
         .enabled(this.viewModel.isDirty)
         .onClick(async () => {
-          const saved: boolean = await this.viewModel.save();
-          if (saved) {
-            promptAction.showToast({ message: '已保存', duration: 1500 });
-          } else {
-            promptAction.showToast({ message: this.viewModel.errorMessage || '保存失败', duration: 2000 });
-          }
+          const ok = await this.viewModel.save();
+          promptAction.showToast({ message: ok ? '已保存' : (this.viewModel.errorMessage || '保存失败'), duration: 1500 });
         })
     }
     .width('100%')

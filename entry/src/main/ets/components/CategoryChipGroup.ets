@@ -8,6 +8,7 @@ export struct CategoryChipGroup {
   @Prop categories: NoteCategory[] = [];
   @State selectedName: string = _sel;
   onSelect?: (category: NoteCategory | null) => void;
+  onDeleteCategory?: (category: NoteCategory) => void;
 
   build() {
     Scroll() {
@@ -49,6 +50,12 @@ export struct CategoryChipGroup {
             this.selectedName = category.name;
             this.onSelect?.(category);
           })
+          .gesture(
+            LongPressGesture({ repeat: false, duration: 600 })
+              .onAction(() => {
+                this.onDeleteCategory?.(category);
+              })
+          )
         }, (category: NoteCategory) => category.id)
       }
       .padding({ left: 12, right: 12 })

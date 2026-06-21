@@ -98,4 +98,18 @@ export class NoteListViewModel {
       return false;
     }
   }
+
+  async deleteCategory(name: string): Promise<void> {
+    try {
+      const repo = this.factory.getNoteRepository();
+      await repo.deleteCategoryOnly(name);
+      if (this.selectedCategory?.name === name) {
+        this.selectedCategory = null;
+      }
+      await this.loadCategories();
+      await this.loadNotes(this.selectedCategory || undefined);
+    } catch (err) {
+      this.errorMessage = '删除分类失败';
+    }
+  }
 }

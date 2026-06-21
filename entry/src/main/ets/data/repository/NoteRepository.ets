@@ -183,4 +183,11 @@ export class NoteRepository {
   async deleteCategory(categoryName: string): Promise<Result<number>> {
     return await this.localDataSource.deleteNotesByCategory(categoryName);
   }
+
+  /**
+   * 仅删除分类本身（保留笔记）
+   */
+  async deleteCategoryOnly(categoryName: string): Promise<Result<boolean>> {
+    return await this.localDataSource.deleteCategory(categoryName);
+  }
 }

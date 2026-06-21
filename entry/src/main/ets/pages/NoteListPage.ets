@@ -65,6 +65,21 @@ struct NoteListPage {
             categories: this.viewModel.categories,
             onSelect: (category: NoteCategory | null) => {
               this.viewModel.filterByCategory(category);
+            },
+            onDeleteCategory: (category: NoteCategory) => {
+              promptAction.showDialog({
+                title: '删除分类',
+                message: '确定删除分类「' + category.name + '」？笔记不会删除',
+                buttons: [
+                  { text: '取消', color: '#8E8E93' },
+                  { text: '删除', color: '#FF3B30' }
+                ]
+              }).then((data: Object) => {
+                const idx: number = (data as Record<string, Object>)['index'] as number;
+                if (idx === 1) {
+                  this.viewModel.deleteCategory(category.name);
+                }
+              });
             }
           })
             .layoutWeight(1)
