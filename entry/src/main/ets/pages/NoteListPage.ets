@@ -131,8 +131,9 @@ struct NoteListPage {
       })
       .margin({ right: 20, bottom: 20 })
       .onClick(() => {
-        AppStorage.setOrCreate('draftCat', this.viewModel.selectedCategory?.name || '');
-        router.pushUrl({ url: ROUTE_NOTE_EDITOR });
+        const cat = this.viewModel.selectedCategory?.name || '';
+        AppStorage.setOrCreate('draftCat', cat);
+        router.pushUrl({ url: ROUTE_NOTE_EDITOR, params: { __cat: cat } });
       })
     }
     .width('100%')

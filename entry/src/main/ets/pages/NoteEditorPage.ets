@@ -38,12 +38,26 @@ struct NoteEditorPage {
       this.content = this.viewModel.note.content;
       this.catName = this.viewModel.getCategoryName();
     } else {
-      // 新建笔记：从 AppStorage 读取预设分类
-      const draft: string = AppStorage.get<string>('draftCat') as string;
+      // 新建笔记：多途径尝试获取预设分类
+      let draft: string = '';
+      // 1) router.params
+      if (params) {
+        const p = params as Record<string, Object>;
+        if (p['__cat']) { draft = p['__cat'] as string; }
+      }
+      // 2) AppStorage
+      if (!draft) {
+        const s: string = AppStorage.get<string>('draftCat') as string;
+        if (s && s.length > 0) { draft = s; AppStorage.delete('draftCat'); }
+      }
+      // 3) 兜底：用分类列表第一个非"其他"
+      if (!draft && this.catList.length > 0) {
+        const first = this.catList.find((c: NoteCategory) => c.name !== '其他');
+        if (first) { draft = first.name; }
+      }
       if (draft && draft.length > 0) {
         this.catName = draft;
         this.viewModel.setCategory(draft);
-        AppStorage.delete('draftCat');
       }
     }
   }
