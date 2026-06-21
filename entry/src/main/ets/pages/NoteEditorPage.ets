@@ -74,26 +74,29 @@ struct NoteEditorPage {
         .fontColor($r('app.color.primary'))
         .padding({ left: 16, right: 16, bottom: 4 })
 
-      // 分类行：直接 Row，不用 Scroll（减少事件层）
+      // 分类切换：左右箭头 + 当前分类名（最简单最可靠）
       Row() {
-        ForEach(this.catList, (cat: NoteCategory, idx: number) => {
-          Row() {
-            Text(cat.name)
-              .hitTestBehavior(HitTestMode.None)
-              .fontSize(13)
-              .fontWeight(this.catName === cat.name ? FontWeight.Medium : FontWeight.Normal)
-              .fontColor(this.catName === cat.name ? '#FFFFFF' : $r('app.color.text_primary'))
-          }
-          .flexShrink(0)
-          .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-          .borderRadius(16)
-          .backgroundColor(this.catName === cat.name ? '#007DFF' : $r('app.color.background'))
-          .margin({ right: 8 })
-          .onClick(() => {
-            this.catName = cat.name;
-            this.viewModel.setCategory(cat.name);
-          })
-        }, (cat: NoteCategory, idx: number) => cat.id)
+        Button('<')
+          .fontSize(16)
+          .fontColor($r('app.color.primary'))
+          .width(36).height(36)
+          .type(ButtonType.Circle)
+          .backgroundColor($r('app.color.background'))
+          .onClick(() => { this.cycleCategory(-1); })
+
+        Text('分类: ' + this.catName)
+          .fontSize(14)
+          .fontColor($r('app.color.primary'))
+          .layoutWeight(1)
+          .textAlign(TextAlign.Center)
+
+        Button('>')
+          .fontSize(16)
+          .fontColor($r('app.color.primary'))
+          .width(36).height(36)
+          .type(ButtonType.Circle)
+          .backgroundColor($r('app.color.background'))
+          .onClick(() => { this.cycleCategory(1); })
       }
       .width('100%')
       .padding({ left: 16, right: 16, bottom: 8 })
@@ -192,5 +195,17 @@ struct NoteEditorPage {
     }
     .width('100%')
     .padding({ left: 4, right: 8, top: 4, bottom: 4 })
+  }
+
+  private cycleCategory(dir: number): void {
+    if (this.catList.length === 0) { return; }
+    let idx: number = -1;
+    for (let i = 0; i < this.catList.length; i++) {
+      if (this.catList[i].name === this.catName) { idx = i; break; }
+    }
+    if (idx < 0) { idx = 0; }
+    idx = (idx + dir + this.catList.length) % this.catList.length;
+    this.catName = this.catList[idx].name;
+    this.viewModel.setCategory(this.catList[idx].name);
   }
 }
