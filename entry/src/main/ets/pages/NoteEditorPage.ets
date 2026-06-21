@@ -1,5 +1,5 @@
-import { Note } from '../model/Note';
-import { NoteEditorViewModel } from '../viewmodel/NoteEditorViewModel';
+import { NoteCategory } from '../model/NoteCategory';
+import { NoteEditorViewModel, NoteDraft } from '../viewmodel/NoteEditorViewModel';
 import router from '@ohos.router';
 import promptAction from '@ohos.promptAction';
 
@@ -11,25 +11,16 @@ class RouterParams {
 @Component
 struct NoteEditorPage {
   @State viewModel: NoteEditorViewModel = new NoteEditorViewModel();
-  @State displayCategoryName: string = '其他';
+  @State showPicker: boolean = false;
   private noteId: string = '';
 
   async aboutToAppear(): Promise<void> {
-    // 从 AppStorage 读取新建笔记的预设分类
-    const pendingCategory: string = AppStorage.get<string>('newNoteCategory') as string;
-    if (pendingCategory && pendingCategory.length > 0) {
-      // 用预设分类重建 ViewModel
-      this.viewModel = new NoteEditorViewModel(undefined, pendingCategory);
-      this.displayCategoryName = pendingCategory;
-      AppStorage.delete('newNoteCategory');
-    }
+    await this.viewModel.loadCategories();
 
-    // 编辑已有笔记
     const params: RouterParams = router.getParams() as RouterParams;
     if (params && params.noteId) {
       this.noteId = params.noteId;
       await this.viewModel.loadNote(this.noteId);
-      this.displayCategoryName = this.viewModel.note.category?.name || '其他';
     }
   }
 
@@ -54,10 +45,58 @@ struct NoteEditorPage {
               this.viewModel.updateTitle(value);
             })
 
-          Text('分类: ' + this.displayCategoryName)
-            .fontSize(13)
-            .fontColor($r('app.color.primary'))
-            .padding({ left: 16, right: 16, bottom: 8 })
+          // ★ 分类选择器
+          Column() {
+            Row() {
+              Text('分类: ' + this.viewModel.getCategoryName())
+                .fontSize(13)
+                .fontColor($r('app.color.primary'))
+                .layoutWeight(1)
+
+              SymbolGlyph($r('sys.symbol.chevron_down'))
+                .fontSize(12)
+                .fontColor([$r('app.color.text_secondary')])
+            }
+            .padding({ left: 16, right: 16, bottom: 4 })
+            .onClick(() => {
+              this.showPicker = !this.showPicker;
+            })
+
+            // 展开的分类列表
+            if (this.showPicker) {
+              Column() {
+                ForEach(this.viewModel.categories, (cat: NoteCategory) => {
+                  Row() {
+                    Circle({ width: 8, height: 8 })
+                      .fill(cat.color)
+                      .margin({ right: 8 })
+
+                    Text(cat.name)
+                      .fontSize(14)
+                      .fontColor(this.viewModel.getCategoryName() === cat.name ?
+                        $r('app.color.primary') : $r('app.color.text_primary'))
+                      .layoutWeight(1)
+
+                    if (this.viewModel.getCategoryName() === cat.name) {
+                      SymbolGlyph($r('sys.symbol.checkmark'))
+                        .fontSize(14)
+                        .fontColor([$r('app.color.primary')])
+                    }
+                  }
+                  .width('100%')
+                  .padding({ left: 16, right: 16, top: 10, bottom: 10 })
+                  .onClick(() => {
+                    this.viewModel.setCategory(cat.name);
+                    this.showPicker = false;
+                  })
+                }, (cat: NoteCategory) => cat.id)
+              }
+              .width('100%')
+              .backgroundColor($r('app.color.background'))
+              .borderRadius(8)
+              .margin({ left: 16, right: 16, bottom: 8 })
+            }
+          }
 
           Divider()
             .strokeWidth(0.5)

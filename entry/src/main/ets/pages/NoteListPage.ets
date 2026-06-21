@@ -1,6 +1,7 @@
 import { Note } from '../model/Note';
 import { NoteCategory } from '../model/NoteCategory';
 import { NoteListViewModel } from '../viewmodel/NoteListViewModel';
+import { NoteDraft } from '../viewmodel/NoteEditorViewModel';
 import { NoteCard } from '../components/NoteCard';
 import { CategoryChipGroup } from '../components/CategoryChipGroup';
 import { CreateCategoryDialog } from '../components/CreateCategoryDialog';
@@ -28,7 +29,6 @@ struct NoteListPage {
   @State viewModel: NoteListViewModel = new NoteListViewModel();
   @State showDeleteDialog: boolean = false;
   @State deleteTargetId: string = '';
-  @State chipSelectedName: string = '';
 
   private createDialogController: CustomDialogController = new CustomDialogController({
     builder: CreateCategoryDialog({
@@ -63,9 +63,7 @@ struct NoteListPage {
         Row() {
           CategoryChipGroup({
             categories: this.viewModel.categories,
-            selectedCategoryName: $chipSelectedName,
             onSelect: (category: NoteCategory | null) => {
-              this.chipSelectedName = category?.name || '';
               this.viewModel.filterByCategory(category);
             }
           })
@@ -119,9 +117,7 @@ struct NoteListPage {
       })
       .margin({ right: 20, bottom: 20 })
       .onClick(() => {
-        if (this.viewModel.selectedCategory) {
-          AppStorage.setOrCreate('newNoteCategory', this.viewModel.selectedCategory.name);
-        }
+        NoteDraft.initialCategory = this.viewModel.selectedCategory?.name || '';
         router.pushUrl({ url: ROUTE_NOTE_EDITOR });
       })
     }

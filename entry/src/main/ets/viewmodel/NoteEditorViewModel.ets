@@ -3,6 +3,14 @@ import { NoteCategory } from '../model/NoteCategory';
 import { Result } from '../common/Result';
 import { ServiceFactory } from '../domain/factory/ServiceFactory';
 
+/**
+ * 全局草稿：存放新建笔记的初始分类名
+ * 不用 AppStorage / router params，避免框架状态管理问题
+ */
+export class NoteDraft {
+  static initialCategory: string = '';
+}
+
 @Observed
 export class NoteEditorViewModel {
   note: Note;
@@ -11,23 +19,21 @@ export class NoteEditorViewModel {
   isDirty: boolean = false;
   isSaving: boolean = false;
   errorMessage: string = '';
-  /** 初始分类名，保存时确保不丢失 */
-  private pendingCategoryName: string = '';
+  categories: NoteCategory[] = [];
 
   private factory: ServiceFactory = ServiceFactory.getInstance();
 
-  constructor(note?: Note, initialCategoryName?: string) {
+  constructor(note?: Note) {
     if (note) {
       this.note = note.clone();
       this.originalNote = note.clone();
       this.isNew = false;
     } else {
       this.note = new Note();
-      // 构造时直接设分类，不依赖事后调用
-      if (initialCategoryName && initialCategoryName.length > 0) {
-        this.pendingCategoryName = initialCategoryName;
-        const cat = new NoteCategory(initialCategoryName);
-        this.note.category = cat;
+      // 从全局草稿读取初始分类
+      if (NoteDraft.initialCategory.length > 0) {
+        this.note.category = new NoteCategory(NoteDraft.initialCategory);
+        NoteDraft.initialCategory = '';
       }
       this.originalNote = this.note.clone();
       this.isNew = true;
@@ -52,6 +58,18 @@ export class NoteEditorViewModel {
     }
   }
 
+  async loadCategories(): Promise<void> {
+    try {
+      const repo = this.factory.getNoteRepository();
+      const result = await repo.getAllCategories();
+      if (result.isSuccess && result.data !== null) {
+        this.categories = result.data;
+      }
+    } catch (err) {
+      // silent
+    }
+  }
+
   updateTitle(title: string): void {
     this.note.title = title;
     this.checkDirty();
@@ -63,18 +81,16 @@ export class NoteEditorViewModel {
     this.checkDirty();
   }
 
-  updateCategory(category: NoteCategory): void {
-    this.note.category = category;
+  setCategory(categoryName: string): void {
+    this.note.category = new NoteCategory(categoryName);
     this.checkDirty();
   }
 
-  async save(): Promise<boolean> {
-    // 防御：保存前确认分类名称没有被覆盖
-    if (this.isNew && this.pendingCategoryName.length > 0 &&
-        this.note.category?.name !== this.pendingCategoryName) {
-      this.note.category = new NoteCategory(this.pendingCategoryName);
-    }
+  getCategoryName(): string {
+    return this.note.category?.name || '其他';
+  }
 
+  async save(): Promise<boolean> {
     if (!this.isDirty) {
       return true;
     }
