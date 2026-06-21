@@ -54,67 +54,66 @@ struct NoteEditorPage {
 
       Divider().strokeWidth(0.5).color($r('app.color.divider'))
 
+      // 标题（固定在 Scroll 外）
+      TextInput({ placeholder: '笔记标题', text: $$this.title })
+        .fontSize(22)
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.text_primary'))
+        .backgroundColor(Color.Transparent)
+        .borderRadius(0)
+        .padding({ left: 16, right: 16, top: 12, bottom: 8 })
+        .onChange((value: string) => {
+          this.title = value;
+          this.viewModel.updateTitle(value);
+        })
+
+      // 分类标签 + 切换行（固定在 Scroll 外，避免嵌套 Scroll 事件冲突）
+      Text('分类: ' + this.catName)
+        .fontSize(13)
+        .fontColor($r('app.color.primary'))
+        .padding({ left: 16, right: 16, bottom: 4 })
+
       Scroll() {
-        Column() {
-          TextInput({ placeholder: '笔记标题', text: $$this.title })
-            .fontSize(22)
-            .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.text_primary'))
-            .backgroundColor(Color.Transparent)
-            .borderRadius(0)
-            .padding({ left: 16, right: 16, top: 12, bottom: 8 })
-            .onChange((value: string) => {
-              this.title = value;
-              this.viewModel.updateTitle(value);
-            })
-
-          // 当前分类
-          Text('分类: ' + this.catName)
-            .fontSize(13)
-            .fontColor($r('app.color.primary'))
-            .padding({ left: 16, right: 16, bottom: 4 })
-
-          // 分类切换行
-          Scroll() {
-            Row() {
-              ForEach(this.catList, (cat: NoteCategory, idx: number) => {
-                Text(cat.name)
-                  .fontSize(12)
-                  .fontWeight(this.catName === cat.name ? FontWeight.Medium : FontWeight.Normal)
-                  .fontColor(this.catName === cat.name ? '#FFFFFF' : $r('app.color.text_primary'))
-                  .padding({ left: 10, right: 10, top: 4, bottom: 4 })
-                  .borderRadius(12)
-                  .backgroundColor(this.catName === cat.name ? '#007DFF' : $r('app.color.background'))
-                  .margin({ right: 6 })
-                  .onClick(() => {
-                    this.catName = cat.name;
-                    this.viewModel.setCategory(cat.name);
-                  })
-              }, (cat: NoteCategory, idx: number) => cat.id)
-            }
-            .padding({ left: 16, right: 16 })
-          }
-          .scrollable(ScrollDirection.Horizontal)
-          .scrollBar(BarState.Off)
-          .height(32)
-          .margin({ bottom: 8 })
-
-          Divider()
-            .strokeWidth(0.5)
-            .color($r('app.color.divider'))
-            .margin({ left: 16, right: 16 })
-
-          TextArea({ placeholder: '开始记录…', text: $$this.content })
-            .fontSize(16)
-            .fontColor($r('app.color.text_primary'))
-            .backgroundColor(Color.Transparent)
-            .constraintSize({ minHeight: 200 })
-            .padding(16)
-            .onChange((value: string) => {
-              this.content = value;
-              this.viewModel.updateContent(value);
-            })
+        Row() {
+          ForEach(this.catList, (cat: NoteCategory, idx: number) => {
+            Text(cat.name)
+              .fontSize(12)
+              .fontWeight(this.catName === cat.name ? FontWeight.Medium : FontWeight.Normal)
+              .fontColor(this.catName === cat.name ? '#FFFFFF' : $r('app.color.text_primary'))
+              .padding({ left: 10, right: 10, top: 4, bottom: 4 })
+              .borderRadius(12)
+              .backgroundColor(this.catName === cat.name ? '#007DFF' : $r('app.color.background'))
+              .margin({ right: 6 })
+              .onClick(() => {
+                this.catName = cat.name;
+                this.viewModel.setCategory(cat.name);
+              })
+          }, (cat: NoteCategory, idx: number) => cat.id)
         }
+        .padding({ left: 16, right: 16 })
+      }
+      .scrollable(ScrollDirection.Horizontal)
+      .scrollBar(BarState.Off)
+      .height(32)
+      .margin({ bottom: 8 })
+
+      Divider()
+        .strokeWidth(0.5)
+        .color($r('app.color.divider'))
+        .margin({ left: 16, right: 16 })
+
+      // 正文（可滚动区域）
+      Scroll() {
+        TextArea({ placeholder: '开始记录…', text: $$this.content })
+          .fontSize(16)
+          .fontColor($r('app.color.text_primary'))
+          .backgroundColor(Color.Transparent)
+          .constraintSize({ minHeight: 300 })
+          .padding(16)
+          .onChange((value: string) => {
+            this.content = value;
+            this.viewModel.updateContent(value);
+          })
       }
       .layoutWeight(1)
       .scrollBar(BarState.Auto)
