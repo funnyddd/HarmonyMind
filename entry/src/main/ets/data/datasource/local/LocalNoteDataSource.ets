@@ -319,14 +319,15 @@ export class LocalNoteDataSource {
   async saveCategory(category: NoteCategory): Promise<Result<boolean>> {
     try {
       const store = this.getStore();
-      const cb = new NoteBucketData();
-      cb.id = category.id;
-      cb.name = category.name;
-      cb.color = category.color;
-      cb.icon_name = category.iconName;
-      cb.created_at = category.createdAt;
-      cb.sort_order = category.order;
-      const bucket: relationalStore.ValuesBucket = cb as Object as relationalStore.ValuesBucket;
+      // 只传 categories 表实际存在的列，避免 NoteBucketData 多余字段导致 insert 失败
+      const bucket: relationalStore.ValuesBucket = {
+        'id': category.id,
+        'name': category.name,
+        'color': category.color,
+        'icon_name': category.iconName,
+        'created_at': category.createdAt,
+        'sort_order': category.order
+      };
 
       await store.insert(DB_TABLE_CATEGORIES, bucket);
       return success(true);

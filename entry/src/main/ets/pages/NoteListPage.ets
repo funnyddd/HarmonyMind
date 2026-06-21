@@ -28,6 +28,7 @@ struct NoteListPage {
   @State viewModel: NoteListViewModel = new NoteListViewModel();
   @State showDeleteDialog: boolean = false;
   @State deleteTargetId: string = '';
+  @State chipSelectedName: string = '';
 
   private createDialogController: CustomDialogController = new CustomDialogController({
     builder: CreateCategoryDialog({
@@ -62,8 +63,9 @@ struct NoteListPage {
         Row() {
           CategoryChipGroup({
             categories: this.viewModel.categories,
-            selectedCategoryName: this.viewModel.selectedCategory?.name || '',
+            selectedCategoryName: this.chipSelectedName,
             onSelect: (category: NoteCategory | null) => {
+              this.chipSelectedName = category?.name || '';
               this.viewModel.filterByCategory(category);
             }
           })
@@ -117,11 +119,10 @@ struct NoteListPage {
       })
       .margin({ right: 20, bottom: 20 })
       .onClick(() => {
-        const p: Record<string, string> = {};
         if (this.viewModel.selectedCategory) {
-          p['categoryName'] = this.viewModel.selectedCategory.name;
+          AppStorage.setOrCreate('newNoteCategory', this.viewModel.selectedCategory.name);
         }
-        router.pushUrl({ url: ROUTE_NOTE_EDITOR, params: p });
+        router.pushUrl({ url: ROUTE_NOTE_EDITOR });
       })
     }
     .width('100%')

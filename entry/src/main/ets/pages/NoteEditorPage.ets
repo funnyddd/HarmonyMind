@@ -19,9 +19,12 @@ struct NoteEditorPage {
     if (params && params.noteId) {
       this.noteId = params.noteId;
       await this.viewModel.loadNote(this.noteId);
-    } else if (params && params.categoryName) {
-      // 从分类筛选页新建笔记，预设分类
-      this.viewModel.setInitialCategory(params.categoryName);
+    }
+    // 从分类筛选页新建笔记时，用 AppStorage 传递分类（比 router params 更可靠）
+    const categoryName: string = AppStorage.get<string>('newNoteCategory') as string;
+    if (categoryName && categoryName.length > 0) {
+      this.viewModel.setInitialCategory(categoryName);
+      AppStorage.delete('newNoteCategory');
     }
   }
 
