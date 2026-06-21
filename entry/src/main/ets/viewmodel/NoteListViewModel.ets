@@ -1,5 +1,5 @@
 import { Note } from '../model/Note';
-import { NoteCategory } from '../model/NoteCategory';
+import { NoteCategory, CATEGORY_ICONS } from '../model/NoteCategory';
 import { ServiceFactory } from '../domain/factory/ServiceFactory';
 
 @Observed
@@ -66,6 +66,35 @@ export class NoteListViewModel {
       return true;
     } else {
       this.errorMessage = result.message;
+      return false;
+    }
+  }
+
+  async createCategory(name: string, color: string): Promise<boolean> {
+    // 重名校验
+    const exists = this.categories.some(c => c.name === name);
+    if (exists) {
+      this.errorMessage = '分类名已存在';
+      return false;
+    }
+
+    const iconName = CATEGORY_ICONS[name] || 'file';
+    const category = new NoteCategory(name, '', color, iconName, this.categories.length);
+
+    try {
+      const repo = this.factory.getNoteRepository();
+      const result = await repo.saveCategory(category);
+
+      if (result.isSuccess) {
+        // 刷新分类列表
+        await this.loadCategories();
+        return true;
+      } else {
+        this.errorMessage = result.message;
+        return false;
+      }
+    } catch (err) {
+      this.errorMessage = '创建分类失败';
       return false;
     }
   }

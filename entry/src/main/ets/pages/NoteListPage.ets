@@ -3,6 +3,7 @@ import { NoteCategory } from '../model/NoteCategory';
 import { NoteListViewModel } from '../viewmodel/NoteListViewModel';
 import { NoteCard } from '../components/NoteCard';
 import { CategoryChipGroup } from '../components/CategoryChipGroup';
+import { CreateCategoryDialog } from '../components/CreateCategoryDialog';
 import router from '@ohos.router';
 import promptAction from '@ohos.promptAction';
 import {
@@ -28,6 +29,17 @@ struct NoteListPage {
   @State showDeleteDialog: boolean = false;
   @State deleteTargetId: string = '';
 
+  private createDialogController: CustomDialogController = new CustomDialogController({
+    builder: CreateCategoryDialog({
+      onConfirm: (name: string, color: string) => {
+        this.onCreateCategory(name, color);
+      }
+    }),
+    autoCancel: true,
+    alignment: DialogAlignment.Center,
+    customStyle: true
+  });
+
   async aboutToAppear(): Promise<void> {
     await this.viewModel.loadCategories();
     await this.viewModel.loadNotes();
@@ -46,14 +58,32 @@ struct NoteListPage {
         // 标题栏
         this.buildTitleBar()
 
-        // 分类筛选
-        CategoryChipGroup({
-          categories: this.viewModel.categories,
-          selectedCategory: this.viewModel.selectedCategory,
-          onSelect: (category: NoteCategory | null) => {
-            this.viewModel.filterByCategory(category);
+        // 分类筛选 + 新建分类按钮
+        Row() {
+          CategoryChipGroup({
+            categories: this.viewModel.categories,
+            selectedCategory: this.viewModel.selectedCategory,
+            onSelect: (category: NoteCategory | null) => {
+              this.viewModel.filterByCategory(category);
+            }
+          })
+            .layoutWeight(1)
+
+          Button() {
+            SymbolGlyph($r('sys.symbol.plus_circle'))
+              .fontSize(22)
+              .fontColor([$r('app.color.primary')])
           }
-        })
+          .type(ButtonType.Circle)
+          .width(32)
+          .height(32)
+          .backgroundColor(Color.Transparent)
+          .margin({ right: 12 })
+          .onClick(() => {
+            this.createDialogController.open();
+          })
+        }
+        .width('100%')
 
         Divider()
           .strokeWidth(0.5)
@@ -191,5 +221,14 @@ struct NoteListPage {
     .justifyContent(FlexAlign.Center)
     .layoutWeight(1)
     .width('100%')
+  }
+
+  private async onCreateCategory(name: string, color: string): Promise<void> {
+    const success = await this.viewModel.createCategory(name, color);
+    if (success) {
+      promptAction.showToast({ message: '分类已创建', duration: 1500 });
+    } else {
+      promptAction.showToast({ message: this.viewModel.errorMessage || '创建失败', duration: 2000 });
+    }
   }
 }
