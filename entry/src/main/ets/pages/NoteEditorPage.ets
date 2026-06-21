@@ -74,31 +74,29 @@ struct NoteEditorPage {
         .fontColor($r('app.color.primary'))
         .padding({ left: 16, right: 16, bottom: 4 })
 
-      // 分类行：用 Button 不用 Text，保证点击事件
-      Scroll() {
-        Row() {
-          ForEach(this.catList, (cat: NoteCategory, idx: number) => {
-            Button(cat.name)
-              .fontSize(12)
+      // 分类行：直接 Row，不用 Scroll（减少事件层）
+      Row() {
+        ForEach(this.catList, (cat: NoteCategory, idx: number) => {
+          Row() {
+            Text(cat.name)
+              .hitTestBehavior(HitTestMode.None)
+              .fontSize(13)
               .fontWeight(this.catName === cat.name ? FontWeight.Medium : FontWeight.Normal)
               .fontColor(this.catName === cat.name ? '#FFFFFF' : $r('app.color.text_primary'))
-              .backgroundColor(this.catName === cat.name ? '#007DFF' : $r('app.color.background'))
-              .borderRadius(12)
-              .height(28)
-              .padding({ left: 10, right: 10 })
-              .margin({ right: 6 })
-              .onClick(() => {
-                this.catName = cat.name;
-                this.viewModel.setCategory(cat.name);
-              })
-          }, (cat: NoteCategory, idx: number) => cat.id)
-        }
-        .padding({ left: 16, right: 16 })
+          }
+          .flexShrink(0)
+          .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+          .borderRadius(16)
+          .backgroundColor(this.catName === cat.name ? '#007DFF' : $r('app.color.background'))
+          .margin({ right: 8 })
+          .onClick(() => {
+            this.catName = cat.name;
+            this.viewModel.setCategory(cat.name);
+          })
+        }, (cat: NoteCategory, idx: number) => cat.id)
       }
-      .scrollable(ScrollDirection.Horizontal)
-      .scrollBar(BarState.Off)
-      .height(36)
-      .margin({ bottom: 8 })
+      .width('100%')
+      .padding({ left: 16, right: 16, bottom: 8 })
 
       Divider()
         .strokeWidth(0.5)
